@@ -67,8 +67,8 @@ namespace chipotto
 		uint8_t GetSoundTimer() const { return SoundTimer; }
 		uint8_t GetMemoryLocValue(int index) const { return MemoryMapping[index]; }
 
-		int GetWidth() const { return width; }
-		int GetHeight() const { return height; }
+		int GetWidth() const { return Width; }
+		int GetHeight() const { return Height; }
 		SDL_Texture* GetTexture() const { return Texture; }
 
 	private:
@@ -93,8 +93,8 @@ namespace chipotto
 		SDL_Window* Window = nullptr;
 		SDL_Renderer* Renderer = nullptr;
 		SDL_Texture* Texture = nullptr;
-		int width = 64;
-		int height = 32;
+		int Width = 64;
+		int Height = 32;
 
 	};
 }

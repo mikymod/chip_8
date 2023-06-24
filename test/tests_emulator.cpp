@@ -23,7 +23,7 @@ void pumpEvent()
 CLOVE_TEST(LoadFromBuffer)
 {
     Emulator emulator;
-    uint16_t opcodes[1] = {0xE000};
+    uint16_t opcodes[1] = {0xe000};
     emulator.LoadFromBuffer(opcodes, 1);
     CLOVE_INT_EQ(0x00E0, emulator.GetCurrentOpcode())
 }
@@ -31,7 +31,7 @@ CLOVE_TEST(LoadFromBuffer)
 CLOVE_TEST(Opcode0_CLS)
 {
     Emulator emulator;
-    uint16_t opcodes[1] = {0xE000};
+    uint16_t opcodes[1] = {0xe000};
     emulator.LoadFromBuffer(opcodes, 1);
     bool success = emulator.Tick();
     CLOVE_IS_TRUE(success);
@@ -47,7 +47,7 @@ CLOVE_TEST(Opcode0_CLS)
 CLOVE_TEST(Opcode0_RET)
 {
     Emulator emulator;
-    uint16_t opcodes[3] = { 0x0222, 0xE000, 0xEE00 };
+    uint16_t opcodes[3] = { 0x0222, 0xe000, 0xee00 };
     emulator.LoadFromBuffer(opcodes, 3);
 
     uint16_t previousPC = emulator.GetPC();
@@ -77,7 +77,7 @@ CLOVE_TEST(Opcode1_JUMP_addr)
 CLOVE_TEST(Opcode2_CALL_addr)
 {
     Emulator emulator;
-    uint16_t opcodes[3] = {0x0222, 0xE000, 0xEE00};
+    uint16_t opcodes[3] = {0x0222, 0xe000, 0xee00};
     emulator.LoadFromBuffer(opcodes, 3);
 
     uint16_t previousPC = emulator.GetPC();
@@ -96,7 +96,7 @@ CLOVE_TEST(Opcode2_CALL_addr)
 CLOVE_TEST(Opcode3_SE_Vx_byte)
 {
     Emulator emulator;
-    uint16_t opcodes[3] = { 0x5561, 0x5531, 0xE000 };
+    uint16_t opcodes[3] = { 0x5561, 0x5531, 0xe000 };
     emulator.LoadFromBuffer(opcodes, 3);
     
     bool success = emulator.Tick();
@@ -112,7 +112,7 @@ CLOVE_TEST(Opcode3_SE_Vx_byte)
 CLOVE_TEST(Opcode4_SNE_Vx_byte)
 {
     Emulator emulator;
-    uint16_t opcodes[3] = { 0x5561, 0x5441, 0xE000 };
+    uint16_t opcodes[3] = { 0x5561, 0x5441, 0xe000 };
     emulator.LoadFromBuffer(opcodes, 3);
 
     bool success = emulator.Tick();
@@ -128,7 +128,7 @@ CLOVE_TEST(Opcode4_SNE_Vx_byte)
 CLOVE_TEST(Opcode5_SE_Vx_Vy)
 {
     Emulator emulator;
-    uint16_t opcodes[6] = { 0x5561, 0x5562, 0x2051, 0xE000, 0x5462, 0x2051 };
+    uint16_t opcodes[6] = { 0x5561, 0x5562, 0x2051, 0xe000, 0x5462, 0x2051 };
     emulator.LoadFromBuffer(opcodes, 6);
 
     bool success = emulator.Tick();
@@ -199,7 +199,7 @@ CLOVE_TEST(Opcode8_LD_Vx_Vy)
 CLOVE_TEST(Opcode8_OR_Vx_Vy)
 {
     Emulator emulator;
-    uint16_t opcodes[3] = { 0xA61, 0x562, 0x2181 };
+    uint16_t opcodes[3] = { 0xa61, 0x562, 0x2181 };
     emulator.LoadFromBuffer(opcodes, 3);
 
     bool success = emulator.Tick();
@@ -218,7 +218,7 @@ CLOVE_TEST(Opcode8_OR_Vx_Vy)
 CLOVE_TEST(Opcode8_AND_Vx_Vy)
 {
     Emulator emulator;
-    uint16_t opcodes[3] = { 0xA61, 0x562, 0x2281 };
+    uint16_t opcodes[3] = { 0xa61, 0x562, 0x2281 };
     emulator.LoadFromBuffer(opcodes, 3);
 
     bool success = emulator.Tick();
@@ -237,7 +237,7 @@ CLOVE_TEST(Opcode8_AND_Vx_Vy)
 CLOVE_TEST(Opcode8_XOR_Vx_Vy)
 {
     Emulator emulator;
-    uint16_t opcodes[3] = { 0xA61, 0x562, 0x2381 };
+    uint16_t opcodes[3] = { 0xa61, 0x562, 0x2381 };
     emulator.LoadFromBuffer(opcodes, 3);
 
     bool success = emulator.Tick();
@@ -423,7 +423,7 @@ CLOVE_TEST(OpcodeA_LD_I_addr)
 CLOVE_TEST(OpcodeB_JP_V0_addr)
 {
     Emulator emulator;
-    uint16_t opcodes[2] = { 0x160, 0x11B1 };
+    uint16_t opcodes[2] = { 0x160, 0x11b1 };
     emulator.LoadFromBuffer(opcodes, 2);
 
     bool success = emulator.Tick();
@@ -517,7 +517,7 @@ CLOVE_TEST(OpcodeF_LD_Vx_DT)
 CLOVE_TEST(OpcodeF_LD_Vx_K)
 {
     Emulator emulator;
-    uint16_t opcodes[] = { 0x060, 0x0AF0, 0xff61 };
+    uint16_t opcodes[] = { 0x060, 0x0af0, 0xff61 };
     emulator.LoadFromBuffer(opcodes, 3);
 
     bool success = emulator.Tick();
@@ -580,7 +580,7 @@ CLOVE_TEST(OpcodeF_ADD_I_VX)
 
     success = emulator.Tick();
     CLOVE_IS_TRUE(success);
-    CLOVE_INT_EQ(0X112, emulator.GetI());
+    CLOVE_INT_EQ(0x112, emulator.GetI());
 }
 
 CLOVE_TEST(OpcodeF_LD_F_VX)

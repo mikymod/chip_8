@@ -21,7 +21,7 @@ namespace chipotto
 		KeyboardMap[SDLK_c] = 0xE;
 		KeyboardMap[SDLK_v] = 0xF;
 
-		for (const auto& pair : KeyboardMap)
+		for (const auto &pair : KeyboardMap)
 		{
 			KeyboardValuesMap[pair.second] = static_cast<SDL_Scancode>(pair.first);
 		}
@@ -43,14 +43,14 @@ namespace chipotto
 		Opcodes[0xE] = std::bind(&Emulator::OpcodeE, this, std::placeholders::_1);
 		Opcodes[0xF] = std::bind(&Emulator::OpcodeF, this, std::placeholders::_1);
 
-		//FINISH IMPLEMENTATION OF SPRITES
+		// FINISH IMPLEMENTATION OF SPRITES
 		MemoryMapping[0x0] = 0xF0;
 		MemoryMapping[0x1] = 0x90;
 		MemoryMapping[0x2] = 0x90;
 		MemoryMapping[0x3] = 0x90;
 		MemoryMapping[0x4] = 0xF0;
 
-		Window = SDL_CreateWindow("Chip-8", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width * 10, height * 10, 0);
+		Window = SDL_CreateWindow("Chip-8", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Width * 10, Height * 10, 0);
 		if (!Window)
 		{
 			SDL_Log("Unable to create window: %s", SDL_GetError());
@@ -63,7 +63,7 @@ namespace chipotto
 			SDL_DestroyWindow(Window);
 			return;
 		}
-		Texture = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, width, height);
+		Texture = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, Width, Height);
 		if (!Texture)
 		{
 			SDL_Log("Unable to create texture: %s", SDL_GetError());
@@ -73,24 +73,23 @@ namespace chipotto
 		}
 	}
 
-
 	bool Emulator::LoadFromFile(std::filesystem::path Path)
 	{
 		std::ifstream file;
 		file.open(Path, std::ios::binary);
-		if (!file.is_open()) return false;
+		if (!file.is_open())
+			return false;
 
 		auto file_size = std::filesystem::file_size(Path);
 
-		file.read(reinterpret_cast<char*>(MemoryMapping.data() + PC), file_size);
+		file.read(reinterpret_cast<char *>(MemoryMapping.data() + PC), file_size);
 		file.close();
 	}
 
-	void Emulator::LoadFromBuffer(uint16_t* buf, size_t size)
+	void Emulator::LoadFromBuffer(uint16_t *opcodes, size_t size)
 	{
-		memcpy((MemoryMapping.data() + PC), buf, size * sizeof(uint16_t));
+		memcpy((MemoryMapping.data() + PC), opcodes, size * sizeof(uint16_t));
 	}
-
 
 	bool Emulator::Tick()
 	{
@@ -122,7 +121,8 @@ namespace chipotto
 		}
 		SDL_PumpEvents();
 
-		if (Suspended) return true;
+		if (Suspended)
+			return true;
 
 		uint16_t offset = static_cast<uint16_t>(MemoryMapping[PC]) << 8;
 		uint16_t opcode = MemoryMapping[PC + 1] + (offset);
@@ -150,10 +150,10 @@ namespace chipotto
 		if ((opcode & 0xFF) == 0xE0)
 		{
 			std::cout << "CLS";
-			uint8_t* pixels = nullptr;
+			uint8_t *pixels = nullptr;
 			int pitch;
-			int result = SDL_LockTexture(Texture, nullptr, reinterpret_cast<void**>(&pixels), &pitch);
-			memset(pixels, 0, pitch * height);
+			int result = SDL_LockTexture(Texture, nullptr, reinterpret_cast<void **>(&pixels), &pitch);
+			memset(pixels, 0, pitch * Height);
 			SDL_UnlockTexture(Texture);
 			SDL_RenderCopy(Renderer, Texture, nullptr, nullptr);
 			SDL_RenderPresent(Renderer);
@@ -161,7 +161,8 @@ namespace chipotto
 		}
 		else if ((opcode & 0xFF) == 0xEE)
 		{
-			if (SP > 0xF && SP < 0xFF) return OpcodeStatus::StackOverflow;
+			if (SP > 0xF && SP < 0xFF)
+				return OpcodeStatus::StackOverflow;
 			std::cout << "RET";
 			PC = Stack[SP & 0xF];
 			SP -= 1;
@@ -224,10 +225,10 @@ namespace chipotto
 
 	OpcodeStatus Emulator::Opcode5(const uint16_t opcode)
 	{
-		uint8_t registerX_index = (opcode >> 8) & 0xF;
-		uint8_t registerY_index = (opcode >> 4) & 0xF;
-		std::cout << "SE V" << (int)registerX_index << ", V" << (int)registerY_index;
-		if (Registers[registerX_index] == Registers[registerY_index])
+		uint8_t register_x_index = (opcode >> 8) & 0xF;
+		uint8_t register_y_index = (opcode >> 4) & 0xF;
+		std::cout << "SE V" << (int)register_x_index << ", V" << (int)register_y_index;
+		if (Registers[register_x_index] == Registers[register_y_index])
 			PC += 2;
 		return OpcodeStatus::IncrementPC;
 	}
@@ -254,83 +255,89 @@ namespace chipotto
 	{
 		if ((opcode & 0xF) == 0x0)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			Registers[registerX_index] = Registers[registerY_index];
-			std::cout << "LD V" << (int)registerX_index << ", V" << (int)registerY_index;
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			Registers[register_x_index] = Registers[register_y_index];
+			std::cout << "LD V" << (int)register_x_index << ", V" << (int)register_y_index;
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xF) == 0x1)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			Registers[registerX_index] |= Registers[registerY_index];
-			std::cout << "OR V" << (int)registerX_index << ", V" << (int)registerY_index;
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			Registers[register_x_index] |= Registers[register_y_index];
+			std::cout << "OR V" << (int)register_x_index << ", V" << (int)register_y_index;
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xF) == 0x2)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			Registers[registerX_index] &= Registers[registerY_index];
-			std::cout << "AND V" << (int)registerX_index << ", V" << (int)registerY_index;
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			Registers[register_x_index] &= Registers[register_y_index];
+			std::cout << "AND V" << (int)register_x_index << ", V" << (int)register_y_index;
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xF) == 0x3)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			Registers[registerX_index] ^= Registers[registerY_index];
-			std::cout << "XOR V" << (int)registerX_index << ", V" << (int)registerY_index;
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			Registers[register_x_index] ^= Registers[register_y_index];
+			std::cout << "XOR V" << (int)register_x_index << ", V" << (int)register_y_index;
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xF) == 0x4)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			int result = static_cast<int>(Registers[registerX_index]) + Registers[registerY_index];
-			if (result > 255) Registers[0xF] = 1;
-			else Registers[0xF] = 0;
-			Registers[registerX_index] += Registers[registerY_index];
-			std::cout << "ADD V" << (int)registerX_index << ", V" << (int)registerY_index;
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			int result = static_cast<int>(Registers[register_x_index]) + Registers[register_y_index];
+			if (result > 255)
+				Registers[0xF] = 1;
+			else
+				Registers[0xF] = 0;
+			Registers[register_x_index] += Registers[register_y_index];
+			std::cout << "ADD V" << (int)register_x_index << ", V" << (int)register_y_index;
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xF) == 0x5)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			if (Registers[registerX_index] > Registers[registerY_index]) Registers[0xF] = 1;
-			else Registers[0xF] = 0;
-			Registers[registerX_index] -= Registers[registerY_index];
-			std::cout << "SUB V" << (int)registerX_index << ", V" << (int)registerY_index;
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			if (Registers[register_x_index] > Registers[register_y_index])
+				Registers[0xF] = 1;
+			else
+				Registers[0xF] = 0;
+			Registers[register_x_index] -= Registers[register_y_index];
+			std::cout << "SUB V" << (int)register_x_index << ", V" << (int)register_y_index;
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xF) == 0x6)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			Registers[0xF] = Registers[registerX_index] & 0x1;
-			Registers[registerX_index] >>= 1;
-			std::cout << "SHR V" << (int)registerX_index << "{, V" << (int)registerY_index << "}";
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			Registers[0xF] = Registers[register_x_index] & 0x1;
+			Registers[register_x_index] >>= 1;
+			std::cout << "SHR V" << (int)register_x_index << "{, V" << (int)register_y_index << "}";
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xF) == 0x7)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			if (Registers[registerY_index] > Registers[registerX_index]) Registers[0xF] = 1;
-			else Registers[0xF] = 0;
-			Registers[registerY_index] -= Registers[registerX_index];
-			std::cout << "SUBN V" << (int)registerX_index << ", V" << (int)registerY_index;
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			if (Registers[register_y_index] > Registers[register_x_index])
+				Registers[0xF] = 1;
+			else
+				Registers[0xF] = 0;
+			Registers[register_y_index] -= Registers[register_x_index];
+			std::cout << "SUBN V" << (int)register_x_index << ", V" << (int)register_y_index;
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xF) == 0xE)
 		{
-			uint8_t registerX_index = (opcode >> 8) & 0xF;
-			uint8_t registerY_index = (opcode >> 4) & 0xF;
-			Registers[0xF] = Registers[registerX_index] >> 7;
-			Registers[registerX_index] <<= 1;
-			std::cout << "SHL V" << (int)registerX_index << "{, V" << (int)registerY_index << "}";
+			uint8_t register_x_index = (opcode >> 8) & 0xF;
+			uint8_t register_y_index = (opcode >> 4) & 0xF;
+			Registers[0xF] = Registers[register_x_index] >> 7;
+			Registers[register_x_index] <<= 1;
+			std::cout << "SHL V" << (int)register_x_index << "{, V" << (int)register_y_index << "}";
 			return OpcodeStatus::IncrementPC;
 		}
 		else
@@ -341,10 +348,10 @@ namespace chipotto
 
 	OpcodeStatus Emulator::Opcode9(const uint16_t opcode)
 	{
-		uint8_t registerX_index = (opcode >> 8) & 0xF;
-		uint8_t registerY_index = (opcode >> 4) & 0xF;
-		std::cout << "SNE V" << (int)registerX_index << ", V" << (int)registerY_index;
-		if (Registers[registerX_index] != Registers[registerY_index])
+		uint8_t register_x_index = (opcode >> 8) & 0xF;
+		uint8_t register_y_index = (opcode >> 4) & 0xF;
+		std::cout << "SNE V" << (int)register_x_index << ", V" << (int)register_y_index;
+		if (Registers[register_x_index] != Registers[register_y_index])
 			PC += 2;
 		return OpcodeStatus::IncrementPC;
 	}
@@ -375,17 +382,17 @@ namespace chipotto
 
 	OpcodeStatus Emulator::OpcodeD(const uint16_t opcode)
 	{
-		uint8_t registerX_index = (opcode >> 8) & 0xF;
-		uint8_t registerY_index = (opcode >> 4) & 0xF;
+		uint8_t register_x_index = (opcode >> 8) & 0xF;
+		uint8_t register_y_index = (opcode >> 4) & 0xF;
 		uint8_t sprite_height = opcode & 0xF;
-		std::cout << "DRW V" << (int)registerX_index << ", V" << (int)registerY_index << ", " << (int)sprite_height;
+		std::cout << "DRW V" << (int)register_x_index << ", V" << (int)register_y_index << ", " << (int)sprite_height;
 
-		uint8_t x_coord = Registers[registerX_index] % width;
-		uint8_t y_coord = Registers[registerY_index] % height;
+		uint8_t x_coord = Registers[register_x_index] % Width;
+		uint8_t y_coord = Registers[register_y_index] % Height;
 
-		uint8_t* pixels = nullptr;
+		uint8_t *pixels = nullptr;
 		int pitch;
-		int result = SDL_LockTexture(Texture, nullptr, reinterpret_cast<void**>(&pixels), &pitch);
+		int result = SDL_LockTexture(Texture, nullptr, reinterpret_cast<void **>(&pixels), &pitch);
 		if (result != 0)
 		{
 			SDL_Log("Failed to lock texture");
@@ -394,7 +401,8 @@ namespace chipotto
 
 		for (int y = 0; y < sprite_height; ++y)
 		{
-			if (y + y_coord >= height) break;
+			if (y + y_coord >= Height)
+				break;
 			uint8_t row_byte = MemoryMapping[I + y];
 			for (int x = 0; x < 8; x++)
 			{
@@ -404,7 +412,8 @@ namespace chipotto
 				{
 					color = 0xFF;
 				}
-				if (x + x_coord >= width) break;
+				if (x + x_coord >= Width)
+					break;
 				int pixel_index = (x + x_coord) * 4 + pitch * (y + y_coord);
 				uint8_t existing_pixel = pixels[pixel_index];
 				color ^= existing_pixel;
@@ -435,8 +444,8 @@ namespace chipotto
 		{
 			uint8_t register_index = (opcode >> 8) & 0xF;
 			std::cout << "SKNP V" << (int)register_index;
-			const uint8_t* keys_state = SDL_GetKeyboardState(nullptr);
-			if (keys_state[KeyboardValuesMap[Registers[register_index]]] == 0)
+			const uint8_t *keysState = SDL_GetKeyboardState(nullptr);
+			if (keysState[KeyboardValuesMap[Registers[register_index]]] == 0)
 			{
 				PC += 2;
 			}
@@ -446,8 +455,8 @@ namespace chipotto
 		{
 			uint8_t register_index = (opcode >> 8) & 0xF;
 			std::cout << "SKP V" << (int)register_index;
-			const uint8_t* keys_state = SDL_GetKeyboardState(nullptr);
-			if (keys_state[KeyboardValuesMap[Registers[register_index]]] == 1)
+			const uint8_t *keysState = SDL_GetKeyboardState(nullptr);
+			if (keysState[KeyboardValuesMap[Registers[register_index]]] == 1)
 			{
 				PC += 2;
 			}
