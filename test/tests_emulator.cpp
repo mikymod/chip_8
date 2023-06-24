@@ -5,6 +5,21 @@
 
 using namespace chipotto;
 
+void pumpEvent()
+{
+    SDL_Event e;
+    e.type = SDL_KEYDOWN;
+    e.key.type = SDL_KEYDOWN;
+    e.key.timestamp = 0;
+    e.key.windowID = 0;
+    e.key.state = SDL_PRESSED;
+    e.key.repeat = 0;
+    e.key.keysym.scancode = SDL_SCANCODE_W;
+    e.key.keysym.sym = SDLK_w;
+    e.key.keysym.mod = KMOD_NONE;
+    SDL_PushEvent(&e);
+}
+
 CLOVE_TEST(LoadFromBuffer)
 {
     Emulator emulator;
@@ -392,223 +407,272 @@ CLOVE_TEST(Opcode9_SNE_Vx_Vy)
 
 CLOVE_TEST(OpcodeA_LD_I_addr)
 {
+    Emulator emulator;
+    uint16_t opcodes[2] = { 0x11A1, 0xFFAF };
+    emulator.LoadFromBuffer(opcodes, 2);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x111, emulator.GetI());
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0xFFF, emulator.GetI());
 }
 
 CLOVE_TEST(OpcodeB_JP_V0_addr)
 {
+    Emulator emulator;
+    uint16_t opcodes[2] = { 0x160, 0x11B1 };
+    emulator.LoadFromBuffer(opcodes, 2);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x1, emulator.GetRegisterValue(0));
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x112, emulator.GetPC());
 }
 
 CLOVE_TEST(OpcodeC_RND_Vx_byte)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0x060, 0xffc0 };
+    emulator.LoadFromBuffer(opcodes, 2);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x0, emulator.GetRegisterValue(0));
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_NE(0x0, emulator.GetRegisterValue(0));
 }
 
 CLOVE_TEST(OpcodeD_DRW_Vx_Vy_nibble)
 {
-
+    // TODO
 }
 
 CLOVE_TEST(OpcodeE_SKP_Vx)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0x560, 0x9ee0, 0xe000, 0x1261 };
+    emulator.LoadFromBuffer(opcodes, 4);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x5, emulator.GetRegisterValue(0));
+
+    pumpEvent();
+
+    uint16_t previousPC = emulator.GetPC();
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(previousPC + 2 * sizeof(uint16_t), emulator.GetPC());
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x12, emulator.GetRegisterValue(1));
 }
 
 CLOVE_TEST(OpcodeE_SKNP_Vx)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0x660, 0x9ee0, 0xe000, 0x1261 };
+    emulator.LoadFromBuffer(opcodes, 4);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x6, emulator.GetRegisterValue(0));
+
+    pumpEvent();
+
+    uint16_t previousPC = emulator.GetPC();
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(previousPC + 2 * sizeof(uint16_t), emulator.GetPC());
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x12, emulator.GetRegisterValue(1));
 }
 
 CLOVE_TEST(OpcodeF_LD_Vx_DT)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0xff60, 0x07f0 };
+    emulator.LoadFromBuffer(opcodes, 2);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0xff, emulator.GetRegisterValue(0));
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(emulator.GetDelayTimer(), emulator.GetRegisterValue(0));
 }
 
 CLOVE_TEST(OpcodeF_LD_Vx_K)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0x060, 0x0AF0, 0xff61 };
+    emulator.LoadFromBuffer(opcodes, 3);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x0, emulator.GetRegisterValue(0));
+
+    pumpEvent();
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x5, emulator.GetRegisterValue(0));
+    CLOVE_INT_EQ(0xff, emulator.GetRegisterValue(1));
 }
 
 CLOVE_TEST(OpcodeF_LD_DT_VX)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0xff60, 0x15f0 };
+    emulator.LoadFromBuffer(opcodes, 2);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0xff, emulator.GetRegisterValue(0));
+    CLOVE_INT_NE(emulator.GetRegisterValue(0), emulator.GetDelayTimer());
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(emulator.GetRegisterValue(0), emulator.GetDelayTimer());
 }
 
 CLOVE_TEST(OpcodeF_LD_ST_VX)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0xff60, 0x18f0 };
+    emulator.LoadFromBuffer(opcodes, 2);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0xff, emulator.GetRegisterValue(0));
+    CLOVE_INT_NE(emulator.GetRegisterValue(0), emulator.GetSoundTimer());
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(emulator.GetRegisterValue(0), emulator.GetSoundTimer());
 }
 
 CLOVE_TEST(OpcodeF_ADD_I_VX)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0x160, 0x11a1, 0x1ef0 };
+    emulator.LoadFromBuffer(opcodes, 3);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x1, emulator.GetRegisterValue(0));
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x111, emulator.GetI());
+
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0X112, emulator.GetI());
 }
 
 CLOVE_TEST(OpcodeF_LD_F_VX)
 {
-
+    // TODO
 }
 
 CLOVE_TEST(OpcodeF_LD_B_VX)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0x8060, 0x33f0 };
+    emulator.LoadFromBuffer(opcodes, 2);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x80, emulator.GetRegisterValue(0));
+
+    uint16_t index = emulator.GetI(); // Init at 0x0
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x1, emulator.GetMemoryLocValue(index));
+    CLOVE_INT_EQ(0x2, emulator.GetMemoryLocValue(index + 1));
+    CLOVE_INT_EQ(0x8, emulator.GetMemoryLocValue(index + 2));
 }
 
 CLOVE_TEST(OpcodeF_LD_locI_VX)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0x160, 0x261, 0x362, 0x463, 0x55f3 };
+    emulator.LoadFromBuffer(opcodes, 5);
 
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+
+    uint16_t index = emulator.GetI(); // Init at 0x0
+    CLOVE_INT_EQ(0x1, emulator.GetMemoryLocValue(index));
+    CLOVE_INT_EQ(0x2, emulator.GetMemoryLocValue(index + 1));
+    CLOVE_INT_EQ(0x3, emulator.GetMemoryLocValue(index + 2));
+    CLOVE_INT_EQ(0x4, emulator.GetMemoryLocValue(index + 3));
 }
 
 CLOVE_TEST(OpcodeF_LD_Vx_locI)
 {
+    Emulator emulator;
+    uint16_t opcodes[] = { 0x160, 0x261, 0x362, 0x463, 0x55f3, 0x060, 0x061, 0x062, 0x063, 0x65f3 };
+    emulator.LoadFromBuffer(opcodes, 10);
 
+    // Writes values from register to memory
+    bool success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+
+    uint16_t index = emulator.GetI(); // Init at 0x0
+    CLOVE_INT_EQ(0x1, emulator.GetMemoryLocValue(index));
+    CLOVE_INT_EQ(0x2, emulator.GetMemoryLocValue(index + 1));
+    CLOVE_INT_EQ(0x3, emulator.GetMemoryLocValue(index + 2));
+    CLOVE_INT_EQ(0x4, emulator.GetMemoryLocValue(index + 3));
+
+    // Cleanup
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x0, emulator.GetRegisterValue(0));
+    CLOVE_INT_EQ(0x0, emulator.GetRegisterValue(1));
+    CLOVE_INT_EQ(0x0, emulator.GetRegisterValue(2));
+    CLOVE_INT_EQ(0x0, emulator.GetRegisterValue(3));
+
+    // Reads values from memory to registers
+    success = emulator.Tick();
+    CLOVE_IS_TRUE(success);
+    CLOVE_INT_EQ(0x1, emulator.GetRegisterValue(0));
+    CLOVE_INT_EQ(0x2, emulator.GetRegisterValue(1));
+    CLOVE_INT_EQ(0x3, emulator.GetRegisterValue(2));
+    CLOVE_INT_EQ(0x4, emulator.GetRegisterValue(3));
 }
-
-//CLOVE_TEST(Opcode1)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.Opcode1(0x1000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(Opcode2)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.Opcode2(0x2000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::NotIncrementPC), static_cast<int>(status));
-//
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    status = emulator.Opcode2(0x2000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::StackOverflow), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(Opcode3)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.Opcode3(0x3000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(Opcode4)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.Opcode4(0x4000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(Opcode5)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.Opcode5(0x5000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(Opcode6)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.Opcode6(0x6000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(Opcode7)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.Opcode7(0x7000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(Opcode8)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.Opcode8(0x8000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.Opcode8(0x2);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.Opcode8(0x3);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.Opcode8(0x4);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.Opcode8(0xE);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(OpcodeA)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.OpcodeA(0xA000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(OpcodeC)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.OpcodeC(0xC000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(OpcodeD)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.OpcodeC(0xD000);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(OpcodeE)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.OpcodeE(0xA1);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.OpcodeE(0x9E);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}
-//
-//CLOVE_TEST(OpcodeF)
-//{
-//    Emulator emulator;
-//    OpcodeStatus status = emulator.OpcodeF(0x55);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.OpcodeF(0x65);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.OpcodeF(0x33);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.OpcodeF(0x29);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.OpcodeF(0x0A);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::WaitForKeyboard), static_cast<int>(status));
-//
-//    status = emulator.OpcodeF(0x1E);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.OpcodeF(0x18);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.OpcodeF(0x15);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//
-//    status = emulator.OpcodeF(0x07);
-//    CLOVE_INT_EQ(static_cast<int>(OpcodeStatus::IncrementPC), static_cast<int>(status));
-//}

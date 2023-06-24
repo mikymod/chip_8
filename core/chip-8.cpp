@@ -462,7 +462,7 @@ namespace chipotto
 		{
 			uint8_t register_index = (opcode >> 8) & 0xF;
 			std::cout << "LD [I], V" << (int)register_index;
-			for (uint8_t i = 0; i < register_index; ++i)
+			for (uint8_t i = 0; i <= register_index; ++i)
 			{
 				MemoryMapping[I + i] = Registers[i];
 			}
@@ -472,9 +472,9 @@ namespace chipotto
 		{
 			uint8_t register_index = (opcode >> 8) & 0xF;
 			std::cout << "LD V" << (int)register_index << ", [I]";
-			for (uint8_t i = 0; i < register_index; ++i)
+			for (uint8_t i = 0; i <= register_index; ++i)
 			{
-				Registers[i] = MemoryMapping[I + 1];
+				Registers[i] = MemoryMapping[I + i];
 			}
 			return OpcodeStatus::IncrementPC;
 		}
@@ -483,7 +483,7 @@ namespace chipotto
 			uint8_t register_index = (opcode >> 8) & 0xF;
 			uint8_t value = Registers[register_index];
 			MemoryMapping[I] = value / 100;
-			MemoryMapping[I + 1] = value - (MemoryMapping[I] * 100) / 10;
+			MemoryMapping[I + 1] = (value - (MemoryMapping[I] * 100)) / 10;
 			MemoryMapping[I + 2] = value % 10;
 			std::cout << "LD B, V" << (int)register_index;
 			return OpcodeStatus::IncrementPC;
@@ -514,6 +514,7 @@ namespace chipotto
 		{
 			uint8_t register_index = (opcode >> 8) & 0xF;
 			std::cout << "LD ST, V" << (int)register_index;
+			SoundTimer = Registers[register_index];
 			return OpcodeStatus::IncrementPC;
 		}
 		else if ((opcode & 0xFF) == 0x15)

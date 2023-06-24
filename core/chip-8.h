@@ -61,14 +61,15 @@ namespace chipotto
 			uint16_t offset = static_cast<uint16_t>(MemoryMapping[PC]) << 8;
 			return MemoryMapping[PC + 1] + (offset);
 		}
-		uint8_t GetRegisterValue(int index) {
-			return Registers[index];
-		}
+		uint8_t GetRegisterValue(int index) const { return Registers[index]; }
+		uint16_t GetI() const { return I; }
+		uint8_t GetDelayTimer() const { return DelayTimer; }
+		uint8_t GetSoundTimer() const { return SoundTimer; }
+		uint8_t GetMemoryLocValue(int index) const { return MemoryMapping[index]; }
 
 		int GetWidth() const { return width; }
 		int GetHeight() const { return height; }
 		SDL_Texture* GetTexture() const { return Texture; }
-
 
 	private:
 		std::array<uint8_t, 0x1000> MemoryMapping;
